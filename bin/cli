@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+require 'byebug'
+require 'launchy'
+
+puts 'Please enter your email'
+email = gets.chomp
+user = nil
+
+unless user = User.find_by_email(email)
+  user = User.new(email: email)
+  user.save!
+end
+
+ShortenedUrl.all.each do |url|
+  puts " #{url.id}. #{url.short_url} => #{url.long_url}"
+end
+
+last_choice = ShortenedUrl.all.length + 1
+puts "#{last_choice}. Create new shortened url"
+
+
+puts "Select an option"
+choice = gets.chomp.to_i
+
+
+selected_url = nil
+# debugger
+
+if(choice == last_choice)
+  puts "Input the url you'd like to shorten"
+  new_url = gets.chomp
+  selected_url = ShortenedUrl.create!(user, new_url)
+  puts "#{selected_url.short_url} is your new short URL"
+else
+  selected_url = ShortenedUrl.find_by_id(choice)
+end
+
+Visit.visit_record!(user, selected_url)
+Launchy.open(selected_url.long_url)

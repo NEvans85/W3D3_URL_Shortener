@@ -11,8 +11,18 @@ class ShortenedUrl < ApplicationRecord
     class_name: 'Visit'
 
   has_many :visitors,
+    Proc.new { distinct },
     through: :visits,
     source: :visitor
+
+  has_many :taggings,
+    primary_key: :id,
+    foreign_key: :shortened_url_id,
+    class_name: 'Tagging'
+
+  has_many :tags,
+    through: :taggings,
+    source: :tag_topic
 
   def self.random_code
     SecureRandom.urlsafe_base64
@@ -25,6 +35,7 @@ class ShortenedUrl < ApplicationRecord
                 short_url: "http://www.#{ShortenedUrl.random_code}.com"
                 })
     short.save!
+    short
   end
 
   def num_clicks
@@ -32,11 +43,11 @@ class ShortenedUrl < ApplicationRecord
   end
 
   def num_uniques
-    Visit.select(:user_id).distinct.length
+    visitors.length
   end
 
   def num_recent_uniques
-    Visit.select(:user_id).distinct.where(created_at: > 10.minutes.ago)
+    visitors.where(created_at: (10.minutes.ago..0.minutes.ago)).length
   end
 
 end
